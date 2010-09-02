@@ -31,6 +31,15 @@ function oauth_google_menu() {
     'type' => MENU_CALLBACK,
   );
 
+  $items['user/%user/oauth/google'] = array(
+    'title' => 'Google OAuth',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oauth_google_user_account_form', 1),
+    'access arguments' => array('administer google data'),
+    'file' => 'oauth_google.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
   return $items;
 }
 
