@@ -148,6 +148,7 @@ function oauth_google_create_access_token($consumer, $request_token, $oauth_veri
     return $access_token;
   }
 }
+
 /**
  * Get scope as single string
  */
@@ -155,13 +156,13 @@ function oauth_google_get_scope() {
   return variable_get('oauth_google_default_scope', OAUTH_GOOGLE_DEFAULT_SCOPE);
 }
 
-
-function oauth_google_request($url, $method, $data) {
+/**
+ * Request wrapper for the Google API
+ */
+function oauth_google_request($url, $method = 'POST', $data = '') {
   global $user;
   $consumer = oauth_google_get_consumer();
   $token = oauth_google_get_user_token($user, $consumer, 'access');
-  dpm($consumer);
-  dpm($token);
   $sigMethod = new OAuthSignatureMethod_HMAC_SHA1();
   
   $request = OAuthRequest::from_consumer_and_token($consumer, $token, $method, $url, array());
@@ -172,7 +173,7 @@ function oauth_google_request($url, $method, $data) {
     $key => $value,
     'GData-Version' => '2.0',
     'Content-Type' => 'application/atom+xml',
- );
+  );
 
   return drupal_http_request($request->get_normalized_http_url(), $headers, $method, $data);
 }
