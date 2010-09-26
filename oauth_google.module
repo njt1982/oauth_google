@@ -159,21 +159,40 @@ function oauth_google_get_scope() {
 /**
  * Request wrapper for the Google API
  */
-function oauth_google_request($url, $method = 'POST', $data = '') {
+function oauth_google_request($args = array()) {
+  $args += array(
+    'url' => GOOGLE_API_URL,
+    'method' => 'GET',
+    'data' => '',
+    'etag' => NULL,
+    'request_type' => 'json',
+  );
+
+  $params = array();
+  if ($args['request_type'] == 'json') {
+    $params['alt'] = 'json';
+  }
+  
   global $user;
   $consumer = oauth_google_get_consumer();
   $token = oauth_google_get_user_token($user, $consumer, 'access');
   $sigMethod = new OAuthSignatureMethod_HMAC_SHA1();
   
-  $request = OAuthRequest::from_consumer_and_token($consumer, $token, $method, $url, array());
+  $request = OAuthRequest::from_consumer_and_token($consumer, $token, $args['method'], $args['url'], $params);
   $request->sign_request($sigMethod, $consumer, $token);
 
   list($key, $value) = explode(': ', $request->to_header());
   $headers = array(
     $key => $value,
     'GData-Version' => '2.0',
-    'Content-Type' => 'application/atom+xml',
+    'Content-Type' => $args['request_type'] == 'json' ? 'application/json' : 'application/atom+xml',
   );
 
-  return drupal_http_request($request->get_normalized_http_url(), $headers, $method, $data);
+  // If we have an etag, pass a * in If-Match which forces google to use the etag in the XML
+  if ($args['etag']) {
+    $headers['If-Match'] = '*';
+  }
+
+  $url = $request->get_normalized_http_url() .($args['request_type'] == 'json' ? '?alt=json' : '');
+  return drupal_http_request($url, $headers, $args['method'], $args['data']);
 }
